@@ -71,6 +71,22 @@ async function run() {
             const result = await tasksCollection.insertOne(newTask);
             res.send(result);
         })
+        // GET API to get tasks by user email
+        app.get('/tasks/:email', verifyToken, async (req, res) => {
+            const { email } = req.params;
+            const query = { email }
+            console.log(query);
+            const result = await tasksCollection.find(query).toArray();
+            res.send(result)
+        });
+        //  DELETE a task by its user
+        app.delete('/my-task/:id', verifyToken, async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const query = { _id: new ObjectId(id) }
+            const result = await tasksCollection.deleteOne(query);
+            res.send(result)
+        })
 
         // Send a ping to confirm a successful connection
         // await client.db("admin").command({ ping: 1 });
