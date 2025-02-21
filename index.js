@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require('express');
 const cors = require('cors');
-// const jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -9,7 +9,20 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-
+const verifyToken = (req, res, next) => {
+    // console.log('inside verify token', req.headers.authorization);
+    if (!req.headers.authorization) {
+        return res.status(401).send({ message: 'unauthorized access' });
+    }
+    const token = req.headers.authorization.split(' ')[1];
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(401).send({ message: 'unauthorized access' })
+        }
+        req.decoded = decoded;
+        next();
+    })
+}
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.5f9uk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -29,8 +42,14 @@ async function run() {
 
         const db = client.db('TasqueDB')
         const usersCollection = db.collection('users')
+        const tasksCollection = db.collection('tasks')
 
-
+        // ****************jwt related api***************
+        app.post('/jwt', async (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+            res.send({ token })
+        })
 
         // **************USERS related api****************
 
@@ -46,6 +65,7 @@ async function run() {
             const result = await usersCollection.insertOne(user);
             res.send(result);
         })
+
 
         // Send a ping to confirm a successful connection
         // await client.db("admin").command({ ping: 1 });
