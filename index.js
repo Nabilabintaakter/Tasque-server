@@ -87,6 +87,33 @@ async function run() {
             const result = await tasksCollection.deleteOne(query);
             res.send(result)
         })
+        // PATCH update a task by its user
+        app.patch('/my-task/:id', verifyToken, async (req, res) => {
+            const id = req.params.id;
+            const { title, description, category } = req.body;
+            if (!title || !category || !description) {
+                return res.status(400).send({ error: "All fields (title, category, description) are required" });
+            }
+            const filter = { _id: new ObjectId(id) };
+            const updatedTask = {
+                $set: {
+                    title,
+                    description,
+                    category
+                },
+            };
+
+            try {
+                const result = await tasksCollection.updateOne(filter, updatedTask);
+                if (result.matchedCount === 0) {
+                    return res.status(404).send({ error: "task not found" });
+                } 
+                res.send(result);
+            } catch (error) {
+                console.error("Error updating task:", error);
+                res.status(500).send({ error: "Failed to update task" });
+            }
+        });
 
         // Send a ping to confirm a successful connection
         // await client.db("admin").command({ ping: 1 });
