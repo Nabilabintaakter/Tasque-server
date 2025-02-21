@@ -65,7 +65,12 @@ async function run() {
             const result = await usersCollection.insertOne(user);
             res.send(result);
         })
-
+        // POST a new task in db
+        app.post('/tasks', verifyToken, async (req, res) => {
+            const newTask = req.body;
+            const result = await tasksCollection.insertOne(newTask);
+            res.send(result);
+        })
 
         // Send a ping to confirm a successful connection
         // await client.db("admin").command({ ping: 1 });
